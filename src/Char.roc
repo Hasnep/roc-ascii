@@ -2,6 +2,8 @@ module [
     Char,
     fromAsciiByte,
     toAsciiByte,
+    # Methods
+    compare,
     # Character set
     characterSet,
     isLowercase,
@@ -75,6 +77,30 @@ fromAsciiByte = \byte ->
 ## Get the corresponding  ASCII code point of a [Char].
 toAsciiByte : Char -> U8
 toAsciiByte = \@Char c -> c
+
+## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII characters, i.e. by comparing their code points.
+compare : Char, Char -> [LT, EQ, GT]
+compare = \@Char a, @Char b -> Num.compare a b
+
+expect compare (@Char 'a') (@Char 'b') == LT
+expect compare (@Char 'b') (@Char 'a') == GT
+expect compare (@Char 'a') (@Char 'a') == EQ
+
+## Sort a list of ASCII characters in ascending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
+sortAsc : List Char -> List Char
+sortAsc = \chars -> List.sortWith chars compare
+
+expect sortAsc [@Char 'b', @Char 'a', @Char 'c'] == [@Char 'a', @Char 'b', @Char 'c']
+expect sortAsc [@Char 'c', @Char 'b', @Char 'a'] == [@Char 'a', @Char 'b', @Char 'c']
+expect sortAsc [@Char 'a', @Char 'b', @Char 'c'] == [@Char 'a', @Char 'b', @Char 'c']
+
+## Sort a list of ASCII characters in descending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
+sortDesc : List Char -> List Char
+sortDesc = \chars -> List.sortWith chars (\a, b -> compare b a)
+
+expect sortDesc [@Char 'b', @Char 'a', @Char 'c'] == [@Char 'c', @Char 'b', @Char 'a']
+expect sortDesc [@Char 'c', @Char 'b', @Char 'a'] == [@Char 'c', @Char 'b', @Char 'a']
+expect sortDesc [@Char 'a', @Char 'b', @Char 'c'] == [@Char 'c', @Char 'b', @Char 'a']
 
 ## Get the ASCII character set of a character.
 characterSet : Char -> [LowercaseLetter, UppercaseLetter, Digit, Whitespace, Punctuation, Control]
