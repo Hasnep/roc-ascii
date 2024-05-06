@@ -155,6 +155,10 @@ expect
 repeat : Ascii, U64 -> Ascii
 repeat = \@Ascii chars, n -> chars |> List.repeat n |> List.join |> fromChars
 
+expect
+    out = fromStr "hello" |> Utils.unwrap "" |> repeat 3
+    out == fromStr "hellohellohello" |> Utils.unwrap ""
+
 ## Check if an ASCII string starts with another ASCII string.
 startsWith : Ascii, Ascii -> Bool
 startsWith = \@Ascii haystackChars, @Ascii needleChars -> List.startsWith haystackChars needleChars
