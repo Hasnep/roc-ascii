@@ -1,3 +1,1 @@
-package "Ascii"
-    exposes [Ascii, Char]
-    packages {}
+package [Ascii, Char] {}

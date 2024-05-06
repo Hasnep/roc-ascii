@@ -1,6 +1,4 @@
-interface Utils
-    exposes [unwrap, intersperse]
-    imports []
+module [unwrap, intersperse]
 
 unwrap = \result, message ->
     when result is

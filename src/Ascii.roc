@@ -1,39 +1,41 @@
-interface Ascii
-    exposes [
-        Ascii,
-        fromStr,
-        toStr,
-        fromChars,
-        toChars,
-        fromAsciiBytes,
-        toAsciiBytes,
-        # Methods
-        isEmpty,
-        toUppercase,
-        toLowercase,
-        concat,
-        join,
-        joinWith,
-        repeat,
-        startsWith,
-        endsWith,
-        toDec,
-        toF64,
-        toF32,
-        toU128,
-        toI128,
-        toU64,
-        toI64,
-        toU32,
-        toI32,
-        toU16,
-        toI16,
-        toU8,
-        toI8,
-        len,
-        reverse,
-    ]
-    imports [Char, Char.{ Char }, Utils]
+module [
+    Ascii,
+    fromStr,
+    toStr,
+    fromChars,
+    toChars,
+    fromAsciiBytes,
+    toAsciiBytes,
+    # Methods
+    isEmpty,
+    toUppercase,
+    toLowercase,
+    concat,
+    join,
+    joinWith,
+    repeat,
+    startsWith,
+    endsWith,
+    toDec,
+    toF64,
+    toF32,
+    toU128,
+    toI128,
+    toU64,
+    toI64,
+    toU32,
+    toI32,
+    toU16,
+    toI16,
+    toU8,
+    toI8,
+    len,
+    reverse,
+]
+
+import Char
+import Char exposing [Char]
+import Utils
 
 Ascii := List Char implements [Eq, Hash]
 
