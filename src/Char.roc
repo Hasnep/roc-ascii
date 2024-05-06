@@ -10,6 +10,9 @@ module [
     isUppercase,
     isLetter,
     isDigit,
+    isAlphanumeric,
+    isOctDigit,
+    isHexDigit,
     isWhitespace,
     isPunctuation,
     isControl,
@@ -135,6 +138,18 @@ isLetter = \c -> isLowercase c || isUppercase c
 ## Check if an ASCII character is a digit.
 isDigit : Char -> Bool
 isDigit = \@Char c -> '0' <= c && c <= '9'
+
+## Check if an ASCII character is an alphanumeric character, i.e. a letter or a digit.
+isAlphanumeric : Char -> Bool
+isAlphanumeric = \c -> isLetter c || isDigit c
+
+## Check if an ASCII character is an octal digit, i.e. a digit in the range 0 to 7 inclusive.
+isOctDigit : Char -> Bool
+isOctDigit = \@Char c -> '0' <= c && c <= '7'
+
+## Check if an ASCII character is a hexadecimal digit, i.e. a digit or a letter in the range 0 to 9, a to f, or A to F.
+isHexDigit : Char -> Bool
+isHexDigit = \@Char c -> ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
 
 ## Check if an ASCII character is a whitespace character.
 isWhitespace : Char -> Bool
