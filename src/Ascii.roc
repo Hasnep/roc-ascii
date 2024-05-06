@@ -7,6 +7,7 @@ module [
     fromAsciiBytes,
     toAsciiBytes,
     # Methods
+    compare,
     isEmpty,
     toUppercase,
     toLowercase,
@@ -31,6 +32,8 @@ module [
     toI8,
     len,
     reverse,
+    sortAsc,
+    sortDesc,
 ]
 
 import Char
@@ -77,6 +80,50 @@ fromAsciiBytes = \bytes ->
 ## Convert an ASCII string to a list of ASCII code points.
 toAsciiBytes : Ascii -> List U8
 toAsciiBytes = \@Ascii chars -> chars |> List.map Char.toAsciiByte
+
+## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII strings, i.e. by comparing their code points.
+compare : Ascii, Ascii -> [LT, EQ, GT]
+compare = \@Ascii aChars, @Ascii bChars ->
+    comparison =
+        List.map2 aChars bChars (\a, b -> { a, b })
+        |> List.walkUntil
+            EQ
+            (\_, { a, b } ->
+                when Char.compare a b is
+                    LT -> Break LT
+                    EQ -> Continue EQ
+                    GT -> Break GT
+            )
+    # If the strings are equal up to the length of the shorter string
+    if comparison == EQ then
+        # Then the shorter string is lexicographically less than the longer string
+        Num.compare (List.len aChars) (List.len bChars)
+    else
+        comparison
+
+expect
+    a = fromStr "hello" |> Utils.unwrap ""
+    b = fromStr "hello" |> Utils.unwrap ""
+    out = compare a b
+    out == EQ
+
+expect
+    a = fromStr "hello" |> Utils.unwrap ""
+    b = fromStr "world" |> Utils.unwrap ""
+    out = compare a b
+    out == LT
+
+expect
+    a = fromStr "world" |> Utils.unwrap ""
+    b = fromStr "hello" |> Utils.unwrap ""
+    out = compare a b
+    out == GT
+
+expect
+    a = fromStr "hello" |> Utils.unwrap ""
+    b = fromStr "hello!" |> Utils.unwrap ""
+    out = compare a b
+    out == LT
 
 ## Check if an ASCII string is empty.
 isEmpty : Ascii -> Bool
@@ -244,3 +291,25 @@ reverse = \@Ascii chars -> chars |> List.reverse |> @Ascii
 expect
     out = "hello" |> fromStr |> Utils.unwrap "" |> reverse
     out |> toStr == "olleh"
+
+## Sort a list of ASCII strings in ascending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
+sortAsc : List Ascii -> List Ascii
+sortAsc = \asciiStrs -> List.sortWith asciiStrs compare
+
+expect
+    a = fromStr "hello" |> Utils.unwrap ""
+    b = fromStr "world" |> Utils.unwrap ""
+    c = fromStr "!" |> Utils.unwrap ""
+    out = sortAsc [a, b, c]
+    out == [c, a, b]
+
+## Sort a list of ASCII strings in descending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
+sortDesc : List Ascii -> List Ascii
+sortDesc = \asciiStrs -> List.sortWith asciiStrs (\a, b -> compare b a)
+
+expect
+    a = fromStr "hello" |> Utils.unwrap ""
+    b = fromStr "world" |> Utils.unwrap ""
+    c = fromStr "!" |> Utils.unwrap ""
+    out = sortDesc [a, b, c]
+    out == [b, a, c]
