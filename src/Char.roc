@@ -321,4 +321,4 @@ us : Char
 us = @Char 31
 ## The ASCII "Delete" (␡) control character
 del : Char
-del = @Char 12
+del = @Char 127
