@@ -31,7 +31,7 @@ ASCII string and character types in Roc.
   If you tried to reverse that string, how would you handle the invisible embedding character?
   The answer is that the reverse function is undefined for Unicode strings.
   Similarly, it's not possible to define uppercase and lowercase transformations for Unicode strings that are each other's inverse.
-  This is because the `ı` character (lowercase dotless i) is normally uppercased to `I` (capital i), and then lowercased to `i` (lowercase dotted i).
+  This is because the `ı` character (lowercase dotless i) is normally uppercased to `I` (capital i), and then lowercased to `i` (lowercase dotted i), changing the character.
   However, when using the Turkish or Azerbaijani locales, `I` is lowercased to `ı`.
   Some of this complexity is sidestepped when using ASCII, as it doesn't support any of these characters, but upper and lowercase functions aren't always well-defined when using ASCII.
   For example, in Dutch, the digraph IJ is treated like a single letter when changing case, so the word `ijswafel` (icecream sandwich) should be capitalised as `IJswafel`.
