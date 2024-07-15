@@ -11,7 +11,7 @@ ASCII string and character types in Roc.
 ## Why you might want to use ASCII
 
 - **Simpler definition of a character**
-  In a fixed-length encoding like ASCII, each character is encoded using the same about of data, for ASCII each character uses one byte.
+  In a fixed-length encoding like ASCII, each character is encoded using the same amount of data, for ASCII each character uses one byte.
   UTF-8 is a variable-length encoding, so a single character like the egg emoji (🥚) is encoded as four bytes.
   UTF-8 also supports combining multiple codepoints into a single grapheme, where a codepoint is a single unit of data and a grapheme is a "unit of writing" and is what we normally mean when thinking of a Unicode "character".
   For example, the combining diaeresis codepoint (◌̈) combines with the codepoint before it to create a single grapheme, like in the string "Röc" which contains 5 bytes, 4 codepoints and 3 graphemes.
