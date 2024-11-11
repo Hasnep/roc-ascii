@@ -2,7 +2,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    roc.url = "github:roc-lang/roc?rev=f7011c8e33b92a7e9f809e6f16849de9fcfa8dd7";
+    roc.url = "github:roc-lang/roc?rev=b7c2cb084e15a56320e652ad3c77fdb8262bc1a4";
   };
 
   nixConfig = {
