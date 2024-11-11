@@ -1,7 +1,8 @@
 default: format check test
 
 format:
-    -roc format
+    roc format src/
+    roc format examples/
 
 check:
     roc check src/main.roc

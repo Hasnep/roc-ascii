@@ -37,8 +37,13 @@
             name = "roc-ascii";
             packages = [
               inputs'.roc.packages.cli
+              pkgs.actionlint
+              pkgs.check-jsonschema
               pkgs.just
+              pkgs.nixfmt-rfc-style
+              pkgs.nodePackages.prettier
               pkgs.pre-commit
+              pkgs.python312Packages.pre-commit-hooks
             ];
             enterShell = "pre-commit install --overwrite";
           };
