@@ -2,8 +2,6 @@ module [
     Ascii,
     fromStr,
     toStr,
-    fromChars,
-    toChars,
     fromAsciiBytes,
     toAsciiBytes,
     # Methods
@@ -40,7 +38,7 @@ import Char
 import Char exposing [Char]
 import Utils
 
-Ascii := List Char implements [Eq, Hash]
+Ascii : List Char
 
 ## Convert a UTF-8 [Str] to an ASCII string.
 fromStr : Str -> Result Ascii [InvalidAscii]
@@ -48,7 +46,7 @@ fromStr = \str -> str |> Str.toUtf8 |> fromAsciiBytes
 
 ## Convert an ASCII string to a UTF-8 [Str].
 toStr : Ascii -> Str
-toStr = \@Ascii chars ->
+toStr = \chars ->
     chars
     |> List.map Char.toAsciiByte
     |> Str.fromUtf8
@@ -59,37 +57,28 @@ expect
     out = "hello" |> fromStr |> Utils.unwrap "" |> toStr
     out == "hello"
 
-## Convert a list of ASCII [Char]s to an ASCII string.
-fromChars : List Char -> Ascii
-fromChars = \chars -> @Ascii chars
-
-## Convert an ASCII string to a list of ASCII [Char]s.
-toChars : Ascii -> List Char
-toChars = \@Ascii chars -> chars
-
 ## Convert a list of ASCII code points to an ASCII string.
 fromAsciiBytes : List U8 -> Result Ascii [InvalidAscii]
 fromAsciiBytes = \bytes ->
     charResults = List.map bytes Char.fromAsciiByte
     if List.all charResults Result.isOk then
-        chars = List.map charResults (\r -> Utils.unwrap r "We already checked that all the results are Ok.")
-        Ok (@Ascii chars)
+        Ok (List.map charResults (\r -> Utils.unwrap r "We already checked that all the results are Ok."))
     else
         Err InvalidAscii
 
 ## Convert an ASCII string to a list of ASCII code points.
 toAsciiBytes : Ascii -> List U8
-toAsciiBytes = \@Ascii chars -> chars |> List.map Char.toAsciiByte
+toAsciiBytes = \chars -> List.map chars Char.toAsciiByte
 
 ## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII strings, i.e. by comparing their code points.
 compare : Ascii, Ascii -> [LT, EQ, GT]
-compare = \@Ascii aChars, @Ascii bChars ->
+compare = \a, b ->
     comparison =
-        List.map2 aChars bChars (\a, b -> { a, b })
+        Utils.zip a b
         |> List.walkUntil
             EQ
-            (\_, { a, b } ->
-                when Char.compare a b is
+            (\_, (aChar, bChar) ->
+                when Char.compare aChar bChar is
                     LT -> Break LT
                     EQ -> Continue EQ
                     GT -> Break GT
@@ -97,7 +86,7 @@ compare = \@Ascii aChars, @Ascii bChars ->
     # If the strings are equal up to the length of the shorter string
     if comparison == EQ then
         # Then the shorter string is lexicographically less than the longer string
-        Num.compare (List.len aChars) (List.len bChars)
+        Num.compare (len a) (len b)
     else
         comparison
 
@@ -125,9 +114,15 @@ expect
     out = compare a b
     out == LT
 
+expect
+    a = fromStr "" |> Utils.unwrap ""
+    b = fromStr "" |> Utils.unwrap ""
+    out = compare a b
+    out == EQ
+
 ## Check if an ASCII string is empty.
 isEmpty : Ascii -> Bool
-isEmpty = \@Ascii chars -> List.isEmpty chars
+isEmpty = \chars -> List.isEmpty chars
 
 expect
     out = "" |> fromStr |> Utils.unwrap "" |> isEmpty
@@ -139,19 +134,15 @@ expect
 
 ## Convert all the lowercase letters in an ASCII string to uppercase, leaving all other characters unchanged.
 toUppercase : Ascii -> Ascii
-toUppercase = \@Ascii chars -> chars
-    |> List.map Char.toUppercase
-    |> fromChars
+toUppercase = \chars -> List.map chars Char.toUppercase
 
 ## Convert all the uppercase letters in an ASCII string to lowercase, leaving all other characters unchanged.
 toLowercase : Ascii -> Ascii
-toLowercase = \@Ascii chars -> chars
-    |> List.map Char.toLowercase
-    |> fromChars
+toLowercase = \chars -> List.map chars Char.toLowercase
 
 ## Concatenate two ASCII strings.
 concat : Ascii, Ascii -> Ascii
-concat = \a, b -> List.concat (toChars a) (toChars b) |> fromChars
+concat = \a, b -> List.concat a b
 
 expect
     a = fromStr "Hello," |> Utils.unwrap ""
@@ -165,11 +156,7 @@ expect
 
 ## Join a list of ASCII strings.
 join : List Ascii -> Ascii
-join = \asciiStrings ->
-    asciiStrings
-    |> List.map toChars
-    |> List.join
-    |> fromChars
+join = \asciiStrings -> List.join asciiStrings
 
 expect
     a = fromStr "hello" |> Utils.unwrap ""
@@ -181,11 +168,7 @@ expect
 
 ## Join a list of ASCII strings with a separator.
 joinWith : List Ascii, Ascii -> Ascii
-joinWith = \asciiStrings, sep ->
-    asciiStrings
-    |> List.map toChars
-    |> Utils.intersperse (toChars sep)
-    |> fromChars
+joinWith = \asciiStrings, sep -> Utils.intersperse asciiStrings sep
 
 expect
     a = fromStr "hello" |> Utils.unwrap ""
@@ -200,7 +183,7 @@ expect
 
 ## Repeat an ASCII string a specified number of times.
 repeat : Ascii, U64 -> Ascii
-repeat = \@Ascii chars, n -> chars |> List.repeat n |> List.join |> fromChars
+repeat = \chars, n -> chars |> List.repeat n |> List.join
 
 expect
     out = fromStr "hello" |> Utils.unwrap "" |> repeat 3
@@ -208,14 +191,14 @@ expect
 
 ## Check if an ASCII string starts with another ASCII string.
 startsWith : Ascii, Ascii -> Bool
-startsWith = \@Ascii haystackChars, @Ascii needleChars -> List.startsWith haystackChars needleChars
+startsWith = \haystack, needle -> List.startsWith haystack needle
 
 expect "hello" |> fromStr |> Utils.unwrap "" |> startsWith (fromStr "he" |> Utils.unwrap "")
 expect "hello" |> fromStr |> Utils.unwrap "" |> startsWith (fromStr "lo" |> Utils.unwrap "") |> Bool.not
 
 ## Check if an ASCII string ends with another ASCII string.
 endsWith : Ascii, Ascii -> Bool
-endsWith = \@Ascii haystackChars, @Ascii needleChars -> List.endsWith haystackChars needleChars
+endsWith = \haystack, needle -> List.endsWith haystack needle
 
 expect "hello" |> fromStr |> Utils.unwrap "" |> endsWith (fromStr "lo" |> Utils.unwrap "")
 expect "hello" |> fromStr |> Utils.unwrap "" |> endsWith (fromStr "he" |> Utils.unwrap "") |> Bool.not
@@ -265,7 +248,7 @@ toI8 = \s -> s |> toStr |> Str.toI8
 
 ## Count the number of characters in an ASCII string.
 len : Ascii -> U64
-len = \asciiStr -> asciiStr |> toChars |> List.len
+len = \chars -> List.len chars
 
 expect
     out = "hello" |> fromStr |> Utils.unwrap "" |> len
@@ -286,7 +269,7 @@ expect
 
 ## Reverse the characters in an ASCII string.
 reverse : Ascii -> Ascii
-reverse = \@Ascii chars -> chars |> List.reverse |> @Ascii
+reverse = \chars -> List.reverse chars
 
 expect
     out = "hello" |> fromStr |> Utils.unwrap "" |> reverse
