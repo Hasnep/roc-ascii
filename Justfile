@@ -12,3 +12,6 @@ test:
 
 docs:
     roc docs src/main.roc
+
+ratchet:
+    ratchet update .github/workflows/*.yaml
