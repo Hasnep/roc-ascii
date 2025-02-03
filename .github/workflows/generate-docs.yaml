@@ -19,7 +19,7 @@ jobs:
       - name: Install Roc
         uses: hasnep/setup-roc@1385796e520f33b3e56484e644a75c0110378873 # ratchet:hasnep/setup-roc@v0.4.0
         with:
-          roc-version: nightly
+          roc-version: 0.0.0-alpha2-rolling
       - name: Generate docs
         run: roc docs src/main.roc
       - name: Fix absolute paths
