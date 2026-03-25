@@ -42,13 +42,13 @@ repos:
 
   # Roc
   - repo: https://github.com/hasnep/pre-commit-roc
-    rev: v0.1.0
+    rev: v0.2.0
     hooks:
       - name: Lint Roc files
         id: check
         args: [src/main.roc]
       - name: Format Roc files
-        id: format
+        id: fmt
 
   # YAML
   - repo: local
@@ -80,7 +80,7 @@ repos:
       - name: Check GitHub Actions are pinned
         id: github-workflows-check-pinned
         language: system
-        entry: ratchet check
+        entry: ratchet lint
         types: [yaml]
         files: \.github/workflows/.*\.ya?ml$
 
