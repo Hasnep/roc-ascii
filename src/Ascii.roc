@@ -1,298 +1,378 @@
-module [
-    Ascii,
-    from_str,
-    to_str,
-    from_ascii_bytes,
-    to_ascii_bytes,
-    # Methods
-    compare,
-    is_empty,
-    to_uppercase,
-    to_lowercase,
-    concat,
-    join,
-    join_with,
-    repeat,
-    starts_with,
-    ends_with,
-    to_dec,
-    to_f64,
-    to_f32,
-    to_u128,
-    to_i128,
-    to_u64,
-    to_i64,
-    to_u32,
-    to_i32,
-    to_u16,
-    to_i16,
-    to_u8,
-    to_i8,
-    len,
-    reverse,
-    sort_asc,
-    sort_desc,
-]
-
-import Char
 import Char exposing [Char]
 import Utils
 
-Ascii : List Char
+Ascii :: List(Char).{
+	from_chars : List(Char) -> Ascii
+	from_chars = |chars| Ascii.(chars)
 
-## Convert a UTF-8 [Str] to an ASCII string.
-from_str : Str -> Result Ascii [InvalidAscii]
-from_str = |str| str |> Str.to_utf8 |> from_ascii_bytes
+	to_chars : Ascii -> List(Char)
+	to_chars = |Ascii.(chars)| chars
 
-## Convert an ASCII string to a UTF-8 [Str].
-to_str : Ascii -> Str
-to_str = |chars|
-    chars
-    |> List.map(Char.to_ascii_byte)
-    |> Str.from_utf8
-    |> Utils.unwrap("ASCII bytes are always valid UTF-8")
+	## Round trip test
+	expect {
+		hello_chars = [
+			Char.from_ascii_byte('h')?,
+			Char.from_ascii_byte('e')?,
+			Char.from_ascii_byte('l')?,
+			Char.from_ascii_byte('l')?,
+			Char.from_ascii_byte('o')?,
+		]
+		out = from_chars(hello_chars).to_chars()
+		out == hello_chars
+	}
 
-# Round trip test
-expect
-    out = "hello" |> from_str |> Utils.unwrap("") |> to_str
-    out == "hello"
+	## Convert a UTF-8 [Str] to an ASCII string.
+	from_str : Str -> Try(Ascii, [InvalidAscii])
+	from_str = |str| {
+		str.to_utf8() |> from_ascii_bytes
+	}
 
-## Convert a list of ASCII code points to an ASCII string.
-from_ascii_bytes : List U8 -> Result Ascii [InvalidAscii]
-from_ascii_bytes = |bytes|
-    char_results = List.map(bytes, Char.from_ascii_byte)
-    if List.all(char_results, Result.is_ok) then
-        Ok(List.map(char_results, |r| Utils.unwrap(r, "We already checked that all the results are Ok.")))
-    else
-        Err(InvalidAscii)
+	## Convert an ASCII string to a UTF-8 [Str].
+	to_str : Ascii -> Str
+	to_str = |Ascii.(chars)| chars.map(Char.to_ascii_byte) |> Str.from_utf8 ?? {
+		crash "ASCII bytes are always valid UTF-8"
+	}
 
-## Convert an ASCII string to a list of ASCII code points.
-to_ascii_bytes : Ascii -> List U8
-to_ascii_bytes = |chars| List.map(chars, Char.to_ascii_byte)
+	# Round trip test
+	expect {
+		hello = "hello"
+		out = from_str(hello)?.to_str()
+		out == hello
+	}
 
-## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII strings, i.e. by comparing their code points.
-compare : Ascii, Ascii -> [LT, EQ, GT]
-compare = |a, b|
-    comparison =
-        Utils.zip(a, b)
-        |> List.walk_until(
-            EQ,
-            |_, (a_char, b_char)|
-                when Char.compare(a_char, b_char) is
-                    LT -> Break(LT)
-                    EQ -> Continue(EQ)
-                    GT -> Break(GT),
-        )
-    # If the strings are equal up to the length of the shorter string
-    if comparison == EQ then
-        # Then the shorter string is lexicographically less than the longer string
-        Num.compare(len(a), len(b))
-    else
-        comparison
+	## Convert a list of ASCII code points to an ASCII string.
+	from_ascii_bytes : List(U8) -> Try(Ascii, [InvalidAscii])
+	from_ascii_bytes = |bytes| {
+		char_results = bytes.map(Char.from_ascii_byte)
+		if List.all(char_results, Try.is_ok) {
+			char_results.map(
+				|r| r ?? {
+					crash "We already checked that all the results are Ok."
+				},
+			)
+				|> from_chars
+				|> Ok
+		} else {
+			Err(InvalidAscii)
+		}
+	}
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("hello") |> Utils.unwrap("")
-    out = compare(a, b)
-    out == EQ
+	expect {
+		hello = ['h', 'e', 'l', 'l', 'o']
+		out = from_ascii_bytes(hello)
+		expected_out = from_str("hello")
+		out == expected_out
+	}
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("world") |> Utils.unwrap("")
-    out = compare(a, b)
-    out == LT
+	## Convert an ASCII string to a list of ASCII code points.
+	to_ascii_bytes : Ascii -> List(U8)
+	to_ascii_bytes = |Ascii.(chars)| chars.map(Char.to_ascii_byte)
 
-expect
-    a = from_str("world") |> Utils.unwrap("")
-    b = from_str("hello") |> Utils.unwrap("")
-    out = compare(a, b)
-    out == GT
+	expect {
+		hello = from_str("hello")
+		out = hello.map_ok(to_ascii_bytes)
+		out == Ok(['h', 'e', 'l', 'l', 'o'])
+	}
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("hello!") |> Utils.unwrap("")
-    out = compare(a, b)
-    out == LT
+	## Check whether two ASCII strings are equal.
+	is_eq : Ascii, Ascii -> Bool
+	is_eq = |Ascii.(a), Ascii.(b)| Utils.zip(a, b).fold_until(
+		True,
+		|_, (a_char, b_char)| if a_char == b_char {
+			Continue(True)
+		} else {
+			Break(False)
+		},
+	)
 
-expect
-    a = from_str("") |> Utils.unwrap("")
-    b = from_str("") |> Utils.unwrap("")
-    out = compare(a, b)
-    out == EQ
+	expect {
+		a = from_str("hello")
+		b = from_str("hello")
+		a == b
+	}
 
-## Check if an ASCII string is empty.
-is_empty : Ascii -> Bool
-is_empty = |chars| List.is_empty(chars)
+	expect {
+		a = from_str("hello")
+		b = from_str("goodbye")
+		a != b
+	}
 
-expect
-    out = "" |> from_str |> Utils.unwrap("") |> is_empty
-    out == Bool.true
+	## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII strings, i.e. by comparing their code points.
+	compare : Ascii, Ascii -> [LT, EQ, GT]
+	compare = |Ascii.(a), Ascii.(b)| {
+		comparison =
+			Utils.zip(a, b).fold_until(
+				EQ,
+				|_, (a_char, b_char)| {
+					match Char.compare(a_char, b_char) {
+						LT => Break(LT)
+						EQ => Continue(EQ)
+						GT => Break(GT)
+					}
+				},
+			)
+		# If the strings are equal up to the length of the shorter string
+		if comparison == EQ {
+			# Then the shorter string is lexicographically less than the longer string
+			a.len().compare(b.len())
+		} else {
+			comparison
+		}
+	}
 
-expect
-    out = "hello" |> from_str |> Utils.unwrap("") |> is_empty
-    out == Bool.false
+	expect {
+		a = from_str("hello")?
+		b = from_str("hello")?
+		out = compare(a, b)
+		out == EQ
+	}
 
-## Convert all the lowercase letters in an ASCII string to uppercase, leaving all other characters unchanged.
-to_uppercase : Ascii -> Ascii
-to_uppercase = |chars| List.map(chars, Char.to_uppercase)
+	expect {
+		a = from_str("hello")?
+		b = from_str("goodbye")?
+		out = compare(a, b)
+		out == GT
+	}
 
-## Convert all the uppercase letters in an ASCII string to lowercase, leaving all other characters unchanged.
-to_lowercase : Ascii -> Ascii
-to_lowercase = |chars| List.map(chars, Char.to_lowercase)
+	expect {
+		a = from_str("goodbye")?
+		b = from_str("hello")?
+		out = compare(a, b)
+		out == LT
+	}
 
-## Concatenate two ASCII strings.
-concat : Ascii, Ascii -> Ascii
-concat = |a, b| List.concat(a, b)
+	expect {
+		a = from_str("hello")?
+		b = from_str("hello!")?
+		out = compare(a, b)
+		out == LT
+	}
 
-expect
-    a = from_str("Hello,") |> Utils.unwrap("")
-    b = from_str(" world!") |> Utils.unwrap("")
-    out = concat(a, b)
-    out == from_str("Hello, world!") |> Utils.unwrap("")
+	expect {
+		a = from_str("")?
+		b = from_str("")?
+		out = compare(a, b)
+		out == EQ
+	}
 
-# # withCapacity
+	## Check if an ASCII string is empty.
+	is_empty : Ascii -> Bool
+	is_empty = |Ascii.(chars)| chars.is_empty()
 
-# # reserve
+	expect {
+		empty = from_str("")?
+		out = empty.is_empty()
+		out
+	}
 
-## Join a list of ASCII strings.
-join : List Ascii -> Ascii
-join = |ascii_strings| List.join(ascii_strings)
+	expect {
+		hello = from_str("hello")?
+		out = hello.is_empty()
+		out.not()
+	}
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("world") |> Utils.unwrap("")
-    c = from_str("!") |> Utils.unwrap("")
-    out = join([a, b, c])
-    expected_out = Str.join_with(["hello", "world", "!"], "") |> from_str |> Utils.unwrap("")
-    out == expected_out
+	## Convert all the lowercase letters in an ASCII string to uppercase, leaving all other characters unchanged.
+	to_uppercase : Ascii -> Ascii
+	to_uppercase = |Ascii.(chars)| Ascii.(chars.map(Char.to_uppercase))
 
-## Join a list of ASCII strings with a separator.
-join_with : List Ascii, Ascii -> Ascii
-join_with = |ascii_strings, sep| Utils.intersperse(ascii_strings, sep)
+	expect {
+		out = from_str("Hello").map_ok(to_uppercase)
+		out == from_str("HELLO")
+	}
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("world") |> Utils.unwrap("")
-    c = from_str("!") |> Utils.unwrap("")
-    sep = from_str("_") |> Utils.unwrap("")
-    out = join_with([a, b, c], sep)
-    expected_out = Str.join_with(["hello", "world", "!"], "_") |> from_str |> Utils.unwrap("")
-    out == expected_out
+	## Convert all the uppercase letters in an ASCII string to lowercase, leaving all other characters unchanged.
+	to_lowercase : Ascii -> Ascii
+	to_lowercase = |Ascii.(chars)| Ascii.(chars.map(Char.to_lowercase))
 
-# split : Ascii, Ascii -> List Ascii
+	expect {
+		out = from_str("Hello").map_ok(to_lowercase)
+		out == from_str("hello")
+	}
 
-## Repeat an ASCII string a specified number of times.
-repeat : Ascii, U64 -> Ascii
-repeat = |chars, n| chars |> List.repeat(n) |> List.join
+	## Concatenate two ASCII strings.
+	concat : Ascii, Ascii -> Ascii
+	concat = |Ascii.(a), Ascii.(b)| Ascii.(List.concat(a, b))
 
-expect
-    out = from_str("hello") |> Utils.unwrap("") |> repeat(3)
-    out == from_str("hellohellohello") |> Utils.unwrap("")
+	expect {
+		a = from_str("Hello,")?
+		b = from_str(" world!")?
+		out = concat(a, b)
+		out == from_str("Hello, world!")?
+	}
 
-## Check if an ASCII string starts with another ASCII string.
-starts_with : Ascii, Ascii -> Bool
-starts_with = |haystack, needle| List.starts_with(haystack, needle)
+	# withCapacity # TODO
 
-expect "hello" |> from_str |> Utils.unwrap("") |> starts_with((from_str("he") |> Utils.unwrap("")))
-expect "hello" |> from_str |> Utils.unwrap("") |> starts_with((from_str("lo") |> Utils.unwrap(""))) |> Bool.not
+	# reserve # TODO
 
-## Check if an ASCII string ends with another ASCII string.
-ends_with : Ascii, Ascii -> Bool
-ends_with = |haystack, needle| List.ends_with(haystack, needle)
+	## Join a list of ASCII strings.
+	join : List(Ascii) -> Ascii
+	join = |ascii_strings| Ascii.(ascii_strings.map(to_chars).join())
 
-expect "hello" |> from_str |> Utils.unwrap("") |> ends_with((from_str("lo") |> Utils.unwrap("")))
-expect "hello" |> from_str |> Utils.unwrap("") |> ends_with((from_str("he") |> Utils.unwrap(""))) |> Bool.not
+	expect {
+		a = from_str("hello")?
+		b = from_str("world")?
+		c = from_str("!")?
+		out = join([a, b, c])
+		expected_out = from_str("helloworld!")?
+		out == expected_out
+	}
 
-# trim
-# trimStart
-# trimEnd
+	## Join a list of ASCII strings with a separator.
+	join_with : List(Ascii), Ascii -> Ascii
+	join_with = |ascii_strings, sep| ascii_strings.map(to_chars) |> Utils.intersperse(to_chars(sep)) |> from_chars
 
-to_dec : Ascii -> Result Dec [InvalidNumStr]
-to_dec = |s| s |> to_str |> Str.to_dec
+	expect {
+		a = from_str("hello")?
+		b = from_str("world")?
+		c = from_str("!")?
+		sep = from_str("_")?
+		out = join_with([a, b, c], sep)
+		expected_out = Str.join_with(["hello", "world", "!"], "_") |> from_str()?
+		out == expected_out
+	}
 
-to_f64 : Ascii -> Result F64 [InvalidNumStr]
-to_f64 = |s| s |> to_str |> Str.to_f64
+	# split : Ascii, Ascii -> List Ascii
+	# split = # TODO
 
-to_f32 : Ascii -> Result F32 [InvalidNumStr]
-to_f32 = |s| s |> to_str |> Str.to_f32
+	## Repeat an ASCII string a specified number of times.
+	repeat : Ascii, U64 -> Ascii
+	repeat = |Ascii.(chars), n| Ascii.(chars.repeat(n).join())
 
-to_u128 : Ascii -> Result U128 [InvalidNumStr]
-to_u128 = |s| s |> to_str |> Str.to_u128
+	expect {
+		out = from_str("hello").map_ok(|x| x.repeat(3))
+		out == from_str("hellohellohello")
+	}
 
-to_i128 : Ascii -> Result I128 [InvalidNumStr]
-to_i128 = |s| s |> to_str |> Str.to_i128
+	## Check if an ASCII string starts with another ASCII string.
+	starts_with : Ascii, Ascii -> Bool
+	starts_with = |Ascii.(haystack), Ascii.(needle)| haystack.starts_with(needle)
 
-to_u64 : Ascii -> Result U64 [InvalidNumStr]
-to_u64 = |s| s |> to_str |> Str.to_u64
+	expect {
+		haystack = from_str("hello")?
+		needle = from_str("he")?
+		haystack.starts_with(needle)
+	}
 
-to_i64 : Ascii -> Result I64 [InvalidNumStr]
-to_i64 = |s| s |> to_str |> Str.to_i64
+	expect {
+		haystack = from_str("goodbye")?
+		needle = from_str("eggs")?
+		haystack.starts_with(needle).not()
+	}
 
-to_u32 : Ascii -> Result U32 [InvalidNumStr]
-to_u32 = |s| s |> to_str |> Str.to_u32
+	## Check if an ASCII string ends with another ASCII string.
+	ends_with : Ascii, Ascii -> Bool
+	ends_with = |Ascii.(haystack), Ascii.(needle)| haystack.ends_with(needle)
 
-to_i32 : Ascii -> Result I32 [InvalidNumStr]
-to_i32 = |s| s |> to_str |> Str.to_i32
+	expect {
+		haystack = from_str("hello")?
+		needle = from_str("llo")?
+		haystack.ends_with(needle)
+	}
 
-to_u16 : Ascii -> Result U16 [InvalidNumStr]
-to_u16 = |s| s |> to_str |> Str.to_u16
+	expect {
+		haystack = from_str("goodbye")?
+		needle = from_str("llo")?
+		haystack.ends_with(needle).not()
+	}
 
-to_i16 : Ascii -> Result I16 [InvalidNumStr]
-to_i16 = |s| s |> to_str |> Str.to_i16
+	# trim
+	# trim = # TODO
+	# trimStart
+	# trimStart = # TODO
+	# trimEnd
+	# trimEnd = # TODO
 
-to_u8 : Ascii -> Result U8 [InvalidNumStr]
-to_u8 = |s| s |> to_str |> Str.to_u8
+	to_dec : Ascii -> Try(Dec, [BadNumStr])
+	to_dec = |s| s.to_str() |> Dec.from_str
 
-to_i8 : Ascii -> Result I8 [InvalidNumStr]
-to_i8 = |s| s |> to_str |> Str.to_i8
+	to_f64 : Ascii -> Try(F64, [BadNumStr])
+	to_f64 = |s| s.to_str() |> F64.from_str
 
-## Count the number of characters in an ASCII string.
-len : Ascii -> U64
-len = |chars| List.len(chars)
+	to_f32 : Ascii -> Try(F32, [BadNumStr])
+	to_f32 = |s| s.to_str() |> F32.from_str
 
-expect
-    out = "hello" |> from_str |> Utils.unwrap("") |> len
-    out == 5
+	to_u128 : Ascii -> Try(U128, [BadNumStr])
+	to_u128 = |s| s.to_str() |> U128.from_str
 
-# replaceEach
-# replaceFirst
-# replaceLast
+	to_i128 : Ascii -> Try(I128, [BadNumStr])
+	to_i128 = |s| s.to_str() |> I128.from_str
 
-# splitFirst
-# splitLast
+	to_u64 : Ascii -> Try(U64, [BadNumStr])
+	to_u64 = |s| s.to_str() |> U64.from_str
 
-# releaseExcessCapacity
+	to_i64 : Ascii -> Try(I64, [BadNumStr])
+	to_i64 = |s| s.to_str() |> I64.from_str
 
-# withPrefix
+	to_u32 : Ascii -> Try(U32, [BadNumStr])
+	to_u32 = |s| s.to_str() |> U32.from_str
 
-# contains
+	to_i32 : Ascii -> Try(I32, [BadNumStr])
+	to_i32 = |s| s.to_str() |> I32.from_str
 
-## Reverse the characters in an ASCII string.
-reverse : Ascii -> Ascii
-reverse = |chars| List.reverse(chars)
+	to_u16 : Ascii -> Try(U16, [BadNumStr])
+	to_u16 = |s| s.to_str() |> U16.from_str
 
-expect
-    out = "hello" |> from_str |> Utils.unwrap("") |> reverse
-    out |> to_str == "olleh"
+	to_i16 : Ascii -> Try(I16, [BadNumStr])
+	to_i16 = |s| s.to_str() |> I16.from_str
 
-## Sort a list of ASCII strings in ascending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
-sort_asc : List Ascii -> List Ascii
-sort_asc = |ascii_strs| List.sort_with(ascii_strs, compare)
+	to_u8 : Ascii -> Try(U8, [BadNumStr])
+	to_u8 = |s| s.to_str() |> U8.from_str
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("world") |> Utils.unwrap("")
-    c = from_str("!") |> Utils.unwrap("")
-    out = sort_asc([a, b, c])
-    out == [c, a, b]
+	to_i8 : Ascii -> Try(I8, [BadNumStr])
+	to_i8 = |s| s.to_str() |> I8.from_str
 
-## Sort a list of ASCII strings in descending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
-sort_desc : List Ascii -> List Ascii
-sort_desc = |ascii_strs| List.sort_with(ascii_strs, |a, b| compare(b, a))
+	## Count the number of characters in an ASCII string.
+	len : Ascii -> U64
+	len = |Ascii.(chars)| chars.len()
 
-expect
-    a = from_str("hello") |> Utils.unwrap("")
-    b = from_str("world") |> Utils.unwrap("")
-    c = from_str("!") |> Utils.unwrap("")
-    out = sort_desc([a, b, c])
-    out == [b, a, c]
+	expect {
+		out = from_str("hello").map_ok(len)
+		out == Ok(5)
+	}
+
+	# replaceEach
+	# replaceFirst
+	# replaceLast
+
+	# splitFirst
+	# splitLast
+
+	# releaseExcessCapacity
+
+	# withPrefix
+
+	# contains
+
+	## Reverse the characters in an ASCII string.
+	rev : Ascii -> Ascii
+	rev = |Ascii.(chars)| Ascii.(chars.rev())
+
+	expect {
+		out = from_str("hello").map_ok(rev)
+		out == from_str("olleh")
+	}
+
+	## Sort a list of ASCII strings in ascending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
+	sort_asc : List(Ascii) -> List(Ascii)
+	sort_asc = |ascii_strs| List.sort_with(ascii_strs, compare)
+
+	expect {
+		a = from_str("hello")?
+		b = from_str("world")?
+		c = from_str("!")?
+		out = sort_asc([a, b, c])
+		out == [c, a, b]
+	}
+
+	## Sort a list of ASCII strings in descending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
+	sort_desc : List(Ascii) -> List(Ascii)
+	sort_desc = |ascii_strs| List.sort_with(ascii_strs, |a, b| compare(b, a))
+
+	expect {
+		a = from_str("hello")?
+		b = from_str("world")?
+		c = from_str("!")?
+		out = sort_desc([a, b, c])
+		out == [b, a, c]
+	}
+}

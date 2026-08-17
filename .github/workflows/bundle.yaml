@@ -16,9 +16,9 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4.2.2
       - name: Install Roc
-        uses: hasnep/setup-roc@9866c6fdc971ee9f4b3eeba03d825dc32a5efa7f # ratchet:hasnep/setup-roc@v0.5.0
+        uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427 # ratchet:roc-lang/setup-roc@v0.3.0
         with:
-          roc-version: 0.0.0-alpha2-rolling
+          version: nightly-new-compiler
       - name: Bundle and release the library
         uses: hasnep/bundle-roc-library@4364d15b4ae83c99e0bc0caab8a254a5d0a9369f # ratchet:hasnep/bundle-roc-library@v0.1.0
         with:

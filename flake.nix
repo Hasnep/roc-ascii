@@ -2,27 +2,18 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    roc.url = "github:roc-lang/roc?rev=689c58f35e0a39ca59feba549f7fcf375562a7a6";
-  };
-
-  nixConfig = {
-    extra-trusted-public-keys = "roc-lang.cachix.org-1:6lZeqLP9SadjmUbskJAvcdGR2T5ViR57pDVkxJQb8R4=";
-    extra-trusted-substituters = "https://roc-lang.cachix.org";
+    roc = {
+      url = "github:roc-lang/roc?dir=src";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      flake-parts,
-      roc,
-      ...
-    }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "aarch64-darwin"
         "aarch64-linux"
-        "x86_64-darwin"
         "x86_64-linux"
       ];
       perSystem =
@@ -34,21 +25,20 @@
         }:
         {
           devShells.default = pkgs.mkShell {
-            name = "roc-ascii";
             packages = [
-              inputs'.roc.packages.cli
+              inputs'.roc.packages.roc
               pkgs.actionlint
               pkgs.check-jsonschema
               pkgs.just
-              pkgs.nixfmt-rfc-style
-              pkgs.nodePackages.prettier
+              pkgs.nixfmt
+              pkgs.prettier
               pkgs.pre-commit
-              pkgs.python312Packages.pre-commit-hooks
+              pkgs.python3Packages.pre-commit-hooks
               pkgs.ratchet
             ];
             enterShell = "pre-commit install --overwrite";
           };
-          formatter = pkgs.nixfmt-rfc-style;
+          formatter = pkgs.nixfmt-tree;
         };
     };
 }
