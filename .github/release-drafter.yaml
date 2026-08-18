@@ -9,11 +9,11 @@ change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 change-title-escapes: \<*_&
 categories:
   - title: Features
-    label: feature
+    labels: [feature]
   - title: Bug fixes
-    labels: fix
+    labelss: [fix]
   - title: Maintenance
-    label: chore
+    labels: [chore]
 version-resolver:
   major:
     labels:
