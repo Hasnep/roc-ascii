@@ -1,6 +1,6 @@
 Utils :: [].{
-	intersperse : List(List(a)), List(a) -> List(a)
-	intersperse = |list, sep| {
+	join_with : List(List(a)), List(a) -> List(a)
+	join_with = |list, sep| {
 		list.fold_with_index(
 			[],
 			|state, elem, index|
@@ -15,7 +15,7 @@ Utils :: [].{
 	}
 
 	expect {
-		out = intersperse([['a', 'b'], ['c', 'd'], ['e']], ['x'])
+		out = join_with([['a', 'b'], ['c', 'd'], ['e']], ['x'])
 		out == ['a', 'b', 'x', 'c', 'd', 'x', 'e']
 	}
 

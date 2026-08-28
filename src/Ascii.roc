@@ -98,23 +98,23 @@ Ascii :: List(Char).{
 	}
 
 	## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII strings, i.e. by comparing their code points.
-	compare : Ascii, Ascii -> [LT, EQ, GT]
-	compare = |Ascii.(a), Ascii.(b)| {
+	order_relative_to : Ascii, Ascii -> [Before, Same, After]
+	order_relative_to = |Ascii.(a), Ascii.(b)| {
 		comparison =
 			Utils.zip(a, b).fold_until(
-				EQ,
+				Same,
 				|_, (a_char, b_char)| {
-					match Char.compare(a_char, b_char) {
-						LT => Break(LT)
-						EQ => Continue(EQ)
-						GT => Break(GT)
+					match a_char |> Char.order_relative_to(b_char) {
+						Before => Break(Before)
+						Same => Continue(Same)
+						After => Break(After)
 					}
 				},
 			)
 		# If the strings are equal up to the length of the shorter string
-		if comparison == EQ {
+		if comparison == Same {
 			# Then the shorter string is lexicographically less than the longer string
-			a.len().compare(b.len())
+			a.len().order_relative_to(b.len())
 		} else {
 			comparison
 		}
@@ -123,36 +123,36 @@ Ascii :: List(Char).{
 	expect {
 		a = from_str("hello")?
 		b = from_str("hello")?
-		out = compare(a, b)
-		out == EQ
+		out = a.order_relative_to(b)
+		out == Same
 	}
 
 	expect {
 		a = from_str("hello")?
 		b = from_str("goodbye")?
-		out = compare(a, b)
-		out == GT
+		out = a.order_relative_to(b)
+		out == After
 	}
 
 	expect {
 		a = from_str("goodbye")?
 		b = from_str("hello")?
-		out = compare(a, b)
-		out == LT
+		out = a.order_relative_to(b)
+		out == Before
 	}
 
 	expect {
 		a = from_str("hello")?
 		b = from_str("hello!")?
-		out = compare(a, b)
-		out == LT
+		out = a.order_relative_to(b)
+		out == Before
 	}
 
 	expect {
 		a = from_str("")?
 		b = from_str("")?
-		out = compare(a, b)
-		out == EQ
+		out = a.order_relative_to(b)
+		out == Same
 	}
 
 	## Check if an ASCII string is empty.
@@ -219,7 +219,7 @@ Ascii :: List(Char).{
 
 	## Join a list of ASCII strings with a separator.
 	join_with : List(Ascii), Ascii -> Ascii
-	join_with = |ascii_strings, sep| ascii_strings.map(to_chars) |> Utils.intersperse(to_chars(sep)) |> from_chars
+	join_with = |ascii_strings, sep| ascii_strings.map(to_chars) |> Utils.join_with(to_chars(sep)) |> from_chars
 
 	expect {
 		a = from_str("hello")?
@@ -354,7 +354,7 @@ Ascii :: List(Char).{
 
 	## Sort a list of ASCII strings in ascending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
 	sort_asc : List(Ascii) -> List(Ascii)
-	sort_asc = |ascii_strs| List.sort_with(ascii_strs, compare)
+	sort_asc = |ascii_strs| List.sort_with(ascii_strs, order_relative_to)
 
 	expect {
 		a = from_str("hello")?
@@ -366,7 +366,7 @@ Ascii :: List(Char).{
 
 	## Sort a list of ASCII strings in descending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
 	sort_desc : List(Ascii) -> List(Ascii)
-	sort_desc = |ascii_strs| List.sort_with(ascii_strs, |a, b| compare(b, a))
+	sort_desc = |ascii_strs| List.sort_with(ascii_strs, |a, b| b.order_relative_to(a))
 
 	expect {
 		a = from_str("hello")?
