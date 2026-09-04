@@ -98,11 +98,11 @@
       },
       "locked": {
         "dir": "src",
-        "lastModified": 1786929010,
-        "narHash": "sha256-+s7CksKk10yPo+i4axq4ZiT/eK+wd9VBzNP0fmtgyP4=",
+        "lastModified": 1788508761,
+        "narHash": "sha256-MVbLRB44vehkXyuYCsGfKQKPSGGkzZ8lC3wdDEIN13M=",
         "owner": "roc-lang",
         "repo": "roc",
-        "rev": "b9ca140e10bdad1fdea300d3ee48d46730364484",
+        "rev": "53fa9b7659a739c9262606a4c4daf21828c2397e",
         "type": "github"
       },
       "original": {
