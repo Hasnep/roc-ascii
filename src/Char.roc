@@ -30,16 +30,16 @@ Char :: U8.{
 	expect Char.('a') != Char.('b')
 
 	## Compare the [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order of two ASCII characters, i.e. by comparing their code points.
-	compare : Char, Char -> [LT, EQ, GT]
-	compare = |Char.(a), Char.(b)| U8.compare(a, b)
+	order_relative_to : Char, Char -> [Before, Same, After]
+	order_relative_to = |Char.(a), Char.(b)| a.order_relative_to(b)
 
-	expect compare(Char.('a'), Char.('b')) == LT
-	expect compare(Char.('b'), Char.('a')) == GT
-	expect compare(Char.('a'), Char.('a')) == EQ
+	expect order_relative_to(Char.('a'), Char.('b')) == Before
+	expect order_relative_to(Char.('b'), Char.('a')) == After
+	expect order_relative_to(Char.('a'), Char.('a')) == Same
 
 	## Sort a list of ASCII characters in ascending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
 	sort_asc : List(Char) -> List(Char)
-	sort_asc = |chars| chars.sort_with(compare)
+	sort_asc = |chars| chars.sort_with(order_relative_to)
 
 	expect sort_asc([Char.('b'), Char.('a'), Char.('c')]) == [Char.('a'), Char.('b'), Char.('c')]
 	expect sort_asc([Char.('c'), Char.('b'), Char.('a')]) == [Char.('a'), Char.('b'), Char.('c')]
@@ -47,7 +47,7 @@ Char :: U8.{
 
 	## Sort a list of ASCII characters in descending [ASCIIbetical](https://en.wikipedia.org/wiki/ASCII#Character_order) order.
 	sort_desc : List(Char) -> List(Char)
-	sort_desc = |chars| chars.sort_with(|a, b| compare(b, a))
+	sort_desc = |chars| chars.sort_with(|a, b| b.order_relative_to(a))
 
 	expect sort_desc([Char.('b'), Char.('a'), Char.('c')]) == [Char.('c'), Char.('b'), Char.('a')]
 	expect sort_desc([Char.('c'), Char.('b'), Char.('a')]) == [Char.('c'), Char.('b'), Char.('a')]
