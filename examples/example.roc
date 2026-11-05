@@ -1,7 +1,12 @@
-app [main!] { cli: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst" }
+app [main!] { ascii: "../src/main.roc" }
 
-import cli.Stdout
+import ascii.Ascii
 
 main! = |_| {
-	Stdout.line!("Hi")
+	str = "Hello, World!"
+	str_ascii = Ascii.from_str(str)?
+	upper_ascii = str_ascii.to_uppercase()
+	echo!("${str}\n")
+	echo!("${upper_ascii.to_str()}\n")
+	Ok({})
 }

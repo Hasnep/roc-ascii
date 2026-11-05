@@ -1,4 +1,4 @@
-import Char exposing [Char]
+import Char
 import Utils
 
 Ascii :: List(Char).{
